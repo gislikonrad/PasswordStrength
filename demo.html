@@ -16,6 +16,10 @@
 			th:last-child, td:last-child {
 				text-align:right;
 			}
+			.ui-progressbar{
+				height:0.3em;
+				padding:1px;
+			}
 		</style>
 		<script type="text/javascript" id="passwordStrength">
 			(function($, window, undefined){
@@ -39,7 +43,7 @@
 								};
 							})()							
 						},
-						debug: function(score){
+						scoreCalculated: function(score){
 							if(console.log){
 								console.log(score.points);
 							}

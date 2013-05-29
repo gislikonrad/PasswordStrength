@@ -12,7 +12,7 @@
 			pointsPerTestPass: 10,
 			progressElement: undefined,
 			tests: {},
-			debug: function(score) {}
+			scoreCalculated: function(score) {}
 		},
 		_methods: {
 			distinct: function(array){
@@ -86,7 +86,7 @@
 			  
 				score.normalized = Math.round((score.points.total / score.totalAvailablePoints) * 100);
 			  
-				self.options.debug(score);
+				self.options.scoreCalculated(score);
 			  
 				return score;
 			},
@@ -285,7 +285,7 @@
 					return true;
 					})(),
 				score = methods.calculatePasswordScore.call(widget, value),
-				total = valid === true ? score.normalized : false;
+				total = !value ? 0 : (valid === true ? score.normalized : false);
 				
 			variables
 				.progressBar
