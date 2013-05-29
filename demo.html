@@ -1,0 +1,59 @@
+<html>
+	<head>
+		<title>Password strength demo</title>
+		<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+		<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+		<script src="jquery.ui.passwordstrength.js"></script>
+		<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/themes/base/jquery-ui.css" />
+		<style>
+			table {
+				text-align:left;
+			}
+			th, td {
+				padding-right:10px;
+			}
+		</style>
+		<script type="text/javascript">
+			(function($, window, undefined){
+				$(function(){
+					$('#password').passwordStrength({
+						debug: function(score){
+							console.log(score.points);
+							var tableBody = $('#output tbody').empty(),
+								tableFooter = $('#output tfoot').empty();
+							
+							for(var key in score.points) {
+								var row = $('<tr></tr>'),
+									points = score.points[key],
+									name = $('<td></td>').text(key).appendTo(row),
+									value = $('<td></td>').text(points).appendTo(row);
+									
+								if(key == 'total')
+									tableFooter.append(row);
+								else
+									tableBody.append(row);
+							}
+						}
+					});
+				});
+			})(jQuery, this);
+		</script>
+	</head>
+	<body>
+		<div>
+			<input type="text" id="password"></input>
+			<table id="output">
+				<thead>
+					<tr>
+						<th>Test name</th>
+						<th>Score</th>
+					</tr>
+				</thead>
+				<tfoot>
+				</tfoot>
+				<tbody>
+				</tbody>
+			</table>
+		</div>
+	</body>
+</html>
