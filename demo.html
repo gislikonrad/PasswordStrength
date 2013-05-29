@@ -6,11 +6,14 @@
 		<script src="jquery.ui.passwordstrength.js"></script>
 		<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/themes/base/jquery-ui.css" />
 		<style>
-			table {
+			table{
 				text-align:left;
 			}
 			th, td {
 				padding-right:10px;
+			}
+			th:last-child, td:last-child {
+				text-align:right;
 			}
 		</style>
 		<script type="text/javascript">
@@ -36,7 +39,9 @@
 							})()							
 						},
 						debug: function(score){
-							console.log(score.points);
+							if(console.log){
+								console.log(score.points);
+							}
 							var tableBody = $('#output tbody').empty(),
 								tableFooter = $('#output tfoot').empty();
 							
@@ -46,7 +51,7 @@
 									name = $('<td></td>').text(key).appendTo(row),
 									value = $('<td></td>').text(points).appendTo(row);
 									
-								if(key == 'total')
+								if(key === 'total')
 									tableFooter.append(row);
 								else
 									tableBody.append(row);
