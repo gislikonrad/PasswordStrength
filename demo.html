@@ -1,6 +1,7 @@
 <html>
 	<head>
 		<title>Password strength demo</title>
+		<meta charset="utf-8" />
 		<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
 		<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
 		<script src="jquery.ui.passwordstrength.js"></script>
@@ -16,7 +17,7 @@
 				text-align:right;
 			}
 		</style>
-		<script type="text/javascript">
+		<script type="text/javascript" id="passwordStrength">
 			(function($, window, undefined){
 				$(function(){
 					$('#password').passwordStrength({

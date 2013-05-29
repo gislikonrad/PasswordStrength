@@ -154,7 +154,7 @@
 					'1234567890',
 					'qwertyuiop',
 					'asdfghjkl',
-					'zxcvbnm'
+					'zxcvbnm'					
 				  ];
 				this.test = function(value) {
 					if (!value) {
@@ -171,12 +171,12 @@
 						for(var j = 0; j < value.length - 1; j++) {
 							for(var k = value.length - j; k > 2; k--) {
 								s = value.substr(j, k).toLowerCase();
-								if (walk.search(s) > -1 || reverseWalk.search(s) > -1) {
+								if (walk.indexOf(s) > -1 || reverseWalk.indexOf(s) > -1) {
 								  return false; 
 								}
 							}
-						}
 					}
+						}
 					return true;
 				};
 			  })();
