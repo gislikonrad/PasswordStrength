@@ -198,7 +198,7 @@
 					max = 255,
 					step = max / 50,
 					g = Math.min(p, 50) * step,
-					r = max - (p - 50) * step,
+					r = Math.min(100 - p, 50) * step,
 					b = 0,
 					toHex = function(number) {
 						var h = Math.floor(number).toString(16);
@@ -291,7 +291,7 @@
 				.progressBar
 				.progressbar({ value: total })
 				.find('.ui-progressbar-value')
-				.css('background', methods.getColor.call(self, total));
+				.css('background', methods.getColor.call(self, score.normalized));
 		}
 	});
 })(jQuery, this);

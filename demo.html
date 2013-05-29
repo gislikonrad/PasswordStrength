@@ -17,6 +17,20 @@
 			(function($, window, undefined){
 				$(function(){
 					$('#password').passwordStrength({
+						allowDigits: true,
+						allowAlpha: true,
+						allowSpecial: true,
+						caseSensitive: true,
+						otherCharacters: 'áéíóúýæöÁÉÍÓÚÝAÖ',
+						tests: {
+							notBannedPassword: new (function() {
+								var banned = ['password', 'sex', 'secret', 'god'];
+								this.test = function(value) {
+									var v = value.toLowerCase();
+									return !!value && $.inArray(v, banned) < 0;
+								};
+							})()							
+						},
 						debug: function(score){
 							console.log(score.points);
 							var tableBody = $('#output tbody').empty(),
