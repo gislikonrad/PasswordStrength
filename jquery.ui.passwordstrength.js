@@ -6,10 +6,10 @@
 			caseSensitive: true,
 			allowSpecial: true,
 			otherCharacters: '',
-			recommendedEntropy: 80,
+			recommendedEntropy: 128,
 			recommendedLength: 16,
 			minLength: 8,
-			pointsPerTestPass: 10,
+			pointsPerTestPass: 15,
 			progressElement: undefined,
 			tests: {},
 			scoreCalculated: function(score) {}
@@ -76,7 +76,7 @@
 						p = 0;
 					if($.isFunction(r.test)) {
 						score.totalAvailablePoints += options.pointsPerTestPass; 
-						if(r.test(password)) {
+						if(!!password && r.test(password)) {
 							p = options.pointsPerTestPass;
 						}
 						score.points[name] = p;
@@ -138,14 +138,14 @@
 				this.test = function(value) {
 				  var array = methods.convertToArray(value);
 				  var distinct = methods.distinct(array);
-				  return !!value && value.length === distinct.length;
+				  return value.length === distinct.length;
 				};
 			  })();  
 			  // Tests whether any of the characters in the password are immediately repeated.
 			  tests.noImmediatelyRepeatingCharacters = new (function() {
 				var r = /(.)\1/;
 				this.test = function(value) {
-				  return !!value && !r.test(value);
+				  return !r.test(value);
 				};
 			  })();  
 			  // Tests whether the password has keyboard walking of 3 or more characters
@@ -157,9 +157,6 @@
 					'zxcvbnm'					
 				  ];
 				this.test = function(value) {
-					if (!value) {
-						return false;
-					}
 					var walk,
 						reverseWalk,
 						s;
@@ -183,7 +180,7 @@
 			  // Tests whether the password is of equal or greater length than the recommended length option
 			  tests['lengthGreaterThanOrEqualTo' + options.recommendedLength] = new (function(){
 				this.test = function(value){
-				  return !!value && value.length >= options.recommendedLength;
+				  return value.length >= options.recommendedLength;
 				};
 			  })();			  
 			  

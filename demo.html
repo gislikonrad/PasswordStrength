@@ -34,15 +34,27 @@
 						recommendedLength: 16,
 						minLength: 8,
 						pointsPerTestPass: 15,
+						// custom tests
 						tests: {
+							notEndingInCommonNumbers: new (function() {
+								this.test = function(value){
+									return !/11|22|33|42|44|55|66|69|77|88|99|00$/g.test(value);
+								}
+							})(),
 							notBannedPassword: new (function() {
-								var banned = ['password', 'sex', 'secret', 'god'];
+								var banned = [
+									'password', 
+									'sex', 
+									'secret', 
+									'god'
+								];
 								this.test = function(value) {
 									var v = value.toLowerCase();
-									return !!value && $.inArray(v, banned) < 0;
+									return $.inArray(v, banned) < 0;
 								};
 							})()							
 						},
+						// score calculated event
 						scoreCalculated: function(score){
 							if(console.log){
 								console.log(score.points);
