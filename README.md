@@ -1,6 +1,6 @@
 # PasswordStrength
 
-##### An extremelty extendable password strength meter.
+##### An extremely extendable password strength meter.
 
 ## Features
 
