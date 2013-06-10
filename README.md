@@ -23,7 +23,7 @@
 * Custom tests can be added to the **tests** option
 * Choose your recommended theoretical password entropy using **recommendedEntropy**
 * Choose your recommended password length using **recommendedLength**
-* Choose how many points a password gets for passing a test using **pointsPerTestPass**
+* Choose how many points a password gets for passing a test using **defaultPenaltyPerTestFail**
   * A higher pointsPerTestPass gives means that the tests contribute more to the score than the theoretical entropy
 * Create a custom function to process the password score using **scoreCalculated**
 
@@ -32,36 +32,47 @@
 ##### Hex password
 
  ```javascript
- $('#password').passwordStrength({ allowSpecial: false, caseSensitive: false });
+ $('#password').passwordStrength({ allowSpecial: false, caseSensitive: false, scoreCalculated: function(score){
+     console.log(score);
+   }
+ });
  ```
 
 ##### Custom test
 
-Custom tests can either be an object with a test function accepting a value or a **RegExp** object
+Custom tests can either be an object with a test function accepting a value or a **RegExp** object. If a custom test is an object, it can have a custom penalty score.
  
  ```javascript
  $('#password').passwordStrength({ 
-   minLength: 3,
-   tests: {
-     isNotBannedPassword: new (function(){
-	   var bannedPasswords = [ 'love', 'secret', 'sex', 'god', 'password' ];
-       this.test = function(value) {
-	     var v = value.toLowerCase();
-		 return $.inArray(v, bannedPasswords) < 0;
-	   };
-     })(),
-     endsWithDigit: /\d$/g     
+	   minLength: 3,
+	   tests: {
+		 isNotBannedPassword: new (function(){
+		   var bannedPasswords = [ 'love', 'secret', 'sex', 'god', 'password' ];
+		   this.test = function(value) {
+			 var v = value.toLowerCase();
+			 return $.inArray(v, bannedPasswords) < 0;
+		   };
+		   this.penalty = -15;
+		 })(),
+		 endsWithDigit: /\d$/g     
+	   }, 
+	   scoreCalculated: function(score){
+		 console.log(score);
+	   }
    });
  ```
 
 ##### Change password recommendations and scoring settings
 
  ```javascript
- $('#password').passwordStrength({ recommendedLength: 20, recommendedEntropy: 96, pointsPerTestPass: 20 });
+ $('#password').passwordStrength({ recommendedLength: 20, recommendedEntropy: 96, defaultPenaltyPerTestFail: 5, 
+	   scoreCalculated: function(score){
+		 console.log(score);
+	   }
+	 });
  ```
  
 ## Requirements
 
 * jQuery
 * jQuery.UI widgets
-* jQuery.UI progressBar
