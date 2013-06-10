@@ -33,7 +33,7 @@
 						recommendedEntropy: 128,
 						recommendedLength: 16,
 						minLength: 8,
-						pointsPerTestPass: 15,
+						defaultPenaltyPerTestPass: -5,
 						// custom tests
 						tests: {
 							notEndingInCommonNumbers: new (function() {
@@ -52,6 +52,7 @@
 									var v = value.toLowerCase();
 									return $.inArray(v, banned) < 0;
 								};
+								this.penalty = -50;
 							})()							
 						},
 						// score calculated event
@@ -68,11 +69,13 @@
 									name = $('<td></td>').text(key).appendTo(row),
 									value = $('<td></td>').text(points).appendTo(row);
 									
-								if(key === 'total')
+								if(key === 'estimatedEntropy')
 									tableFooter.append(row);
 								else
 									tableBody.append(row);
 							}
+							
+							$(this).css('border-color', score.color);
 						}
 					});
 				});

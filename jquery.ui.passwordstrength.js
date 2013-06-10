@@ -9,8 +9,7 @@
 			recommendedEntropy: 128,
 			recommendedLength: 16,
 			minLength: 8,
-			pointsPerTestPass: 15,
-			progressElement: undefined,
+			defaultPenaltyPerTestFail: 10,
 			tests: {},
 			scoreCalculated: function(score) {}
 		},
@@ -39,6 +38,9 @@
 			  }
 			  return a;
 			},
+			ensureNegative: function(number) {
+				return -1 * Math.sqrt(Math.pow(number, 2));
+			},
 			log2: function(number) {
 			  return Math.log(number) / Math.LN2;
 			},
@@ -61,32 +63,39 @@
 					variables = self._variables,
 					methods = self._methods,
 					theoreticalEntropy = methods.calculateTheoreticalEntropy.call(self, password, variables.available),
+					targetEntropy = options.recommendedEntropy,
+					defaultPenalty = methods.ensureNegative(options.defaultPenaltyPerTestFail),
 					score = {
-						recommendedEntropy: options.recommendedEntropy,
-						totalAvailablePoints: options.recommendedEntropy,
+						targetEntropy: targetEntropy,
+						totalAvailablePoints: targetEntropy,
 						points: {
 							theoreticalEntropy: theoreticalEntropy,
-							total: Math.min(theoreticalEntropy, options.recommendedEntropy)
+							estimatedEntropy: Math.min(theoreticalEntropy, targetEntropy)
 						}
 					};
-					
 			  
 				 for(var name in options.tests) {
-					var r = options.tests[name],
+					var t = options.tests[name],
 						p = 0;
-					if($.isFunction(r.test)) {
-						score.totalAvailablePoints += options.pointsPerTestPass; 
-						if(!!password && r.test(password)) {
-							p = options.pointsPerTestPass;
+					if($.isFunction(t.test)) {
+						if(!!password && !t.test(password)) {
+							if(t.penalty){
+								p = methods.ensureNegative(t.penalty);
+							}
+							else {
+								p = defaultPenalty;
+							}
 						}
 						score.points[name] = p;
-						score.points.total += p;
+						score.points.estimatedEntropy += p;
 					}
 				 }
 			  
-				score.normalized = Math.round((score.points.total / score.totalAvailablePoints) * 100);
-			  
-				self.options.scoreCalculated(score);
+			    score.points.estimatedEntropy = Math.max(score.points.estimatedEntropy, 1);
+				score.normalized = Math.round((score.points.estimatedEntropy / score.totalAvailablePoints) * 100);
+			    score.color = methods.getColor.call(self, score.normalized);
+			    
+				self.options.scoreCalculated.call(self.element, score);
 			  
 				return score;
 			},
@@ -205,7 +214,7 @@
 					rhex = toHex(r),
 					bhex = toHex(b);
 			
-				return '#' + rhex + ghex + bhex;
+				return percentage > 0 ? '#' + rhex + ghex + bhex : '';
 			}
 		},
 		_variables: {
@@ -243,17 +252,14 @@
 				notSpecialPattern = (self._variables.patterns.notSpecial = methods.createRegexClass(special, true)),
 				notOtherPattern   = (self._variables.patterns.notOther = methods.createRegexClass(other, true)),
 				
-				tests = (options.tests = $.extend(methods.createTests.call(self), options.tests)),
-				
-				progress = (self._variables.progressBar = (options.progressElement || $('<div></div>').progressbar().insertAfter(self.element).width(self.element.outerWidth())));
+				tests = (options.tests = $.extend(methods.createTests.call(self), options.tests));
 		},
 		_init: function(){
 			var self = this,
 				methods = self._methods,
 				options = self.options,
 				variables = self._variables,
-				input = self.element.val(''),
-				progress = variables.progressBar.progressbar({value: 0});
+				input = self.element.val('');
 				
 			input
 				.unbind('keyup', self.keyup)
@@ -281,14 +287,7 @@
 					}
 					return true;
 					})(),
-				score = methods.calculatePasswordScore.call(widget, value),
-				total = !value ? 0 : (valid === true ? score.normalized : false);
-				
-			variables
-				.progressBar
-				.progressbar({ value: total })
-				.find('.ui-progressbar-value')
-				.css('background', methods.getColor.call(self, score.normalized));
+				score = methods.calculatePasswordScore.call(widget, value);
 		}
 	});
 })(jQuery, this);
