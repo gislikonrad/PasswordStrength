@@ -144,16 +144,24 @@
 			  }
 			  // Tests whether all the characters in the password are distinct
 			  tests.notAllDistinctCharacters = new (function() {
+				var penaltyPerRepetition = 3;
+				this.penalty = 0;
+			  
 				this.test = function(value) {
-				  var array = methods.convertToArray(value);
-				  var distinct = methods.distinct(array);
-				  return value.length === distinct.length;
+				  this.penalty = methods.ensureNegative(options.defaultPenaltyPerTestFail);
+				  
+				  var array = methods.convertToArray(value),
+					  distinct = methods.distinct(array),
+					  difference = value.length - distinct.length;
+				  
+				  this.penalty -= difference * penaltyPerRepetition;					  
+				  return difference === 0;
 				};
 			  })();  
 			  // Tests whether any of the characters in the password are immediately repeated.
 			  tests.immediatelyRepeatingCharacters = new (function() {			  
 				var r = /(.)\1/,
-					penaltyPerRepetition = 3;
+					penaltyPerImmediateRepetition = 3;
 				
 				this.penalty = 0;
 				
@@ -167,7 +175,7 @@
 					for(var i = 0; i < value.length; i++){
 						c = value[i];
 						if(!!previous && previous == c){
-							this.penalty -= penaltyPerRepetition;
+							this.penalty -= penaltyPerImmediateRepetition;
 						}
 						previous = c;
 					}
