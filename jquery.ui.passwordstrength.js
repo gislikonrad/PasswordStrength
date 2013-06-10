@@ -91,9 +91,9 @@
 					}
 				 }
 			  
-			    score.points.estimatedEntropy = Math.max(score.points.estimatedEntropy, 1);
+			    score.points.estimatedEntropy = Math.max(score.points.estimatedEntropy, 0);
 				score.normalized = Math.round((score.points.estimatedEntropy / score.totalAvailablePoints) * 100);
-			    score.color = methods.getColor.call(self, score.normalized);
+			    score.color = !!password ? methods.getColor.call(self, score.normalized) : '';
 			    
 				self.options.scoreCalculated.call(self.element, score);
 			  
@@ -126,7 +126,7 @@
 			  if(options.allowDigits === true) {
 				variables.available += characterSets.digits;
 				// Tests whether there are digits in the password
-				tests.digits = new RegExp(patterns.digits);
+				tests.noDigits = new RegExp(patterns.digits);
 				if(options.allowSpecial === true || !!characterSets.other || options.allowAlpha === true) {
 					// Tests whether there are digits within the password. Passwords with digits at the start or end only will not pass this test.
 				    tests.digitsWithin = new RegExp(patterns.notDigits + '+' + patterns.digits + '+' + patterns.notDigits + '+' );
@@ -135,15 +135,15 @@
 			  if(options.allowSpecial === true) {
 				variables.available += characterSets.special;
 				// Tests whether there are special characters in the password
-				tests.special = new RegExp(patterns.special);
+				tests.noSpecial = new RegExp(patterns.special);
 			  }
 			  if(!!options.otherCharacters) {
 				variables.available += characterSets.other;
 				// Tests whether any of the custom characters are in the password
-				tests.other = new RegExp(patterns.other);
+				tests.noOther = new RegExp(patterns.other);
 			  }
 			  // Tests whether all the characters in the password are distinct
-			  tests.allDistinctCharacters = new (function() {
+			  tests.notAllDistinctCharacters = new (function() {
 				this.test = function(value) {
 				  var array = methods.convertToArray(value);
 				  var distinct = methods.distinct(array);
@@ -151,14 +151,33 @@
 				};
 			  })();  
 			  // Tests whether any of the characters in the password are immediately repeated.
-			  tests.noImmediatelyRepeatingCharacters = new (function() {
-				var r = /(.)\1/;
+			  tests.immediatelyRepeatingCharacters = new (function() {			  
+				var r = /(.)\1/,
+					penaltyPerRepetition = 3;
+				
+				this.penalty = 0;
+				
 				this.test = function(value) {
-				  return !r.test(value);
+				  var hasImmediatelyRepeatingChars = r.test(value);
+				  
+				  if(hasImmediatelyRepeatingChars){
+					var previous,
+						c;
+					this.penalty = methods.ensureNegative(options.defaultPenaltyPerTestFail);
+					for(var i = 0; i < value.length; i++){
+						c = value[i];
+						if(!!previous && previous == c){
+							this.penalty -= penaltyPerRepetition;
+						}
+						previous = c;
+					}
+				  }
+				  
+				  return !hasImmediatelyRepeatingChars;
 				};
 			  })();  
 			  // Tests whether the password has keyboard walking of 3 or more characters
-			  tests.noKeyboardWalking = new (function() {
+			  tests.keyboardWalking = new (function() {
 				var keyboardWalks = [
 					'1234567890',
 					'qwertyuiop',
@@ -187,7 +206,7 @@
 				};
 			  })();
 			  // Tests whether the password is of equal or greater length than the recommended length option
-			  tests['lengthGreaterThanOrEqualTo' + options.recommendedLength] = new (function(){
+			  tests['lengthLessThan' + options.recommendedLength] = new (function(){
 				this.test = function(value){
 				  return value.length >= options.recommendedLength;
 				};
@@ -214,7 +233,7 @@
 					rhex = toHex(r),
 					bhex = toHex(b);
 			
-				return percentage > 0 ? '#' + rhex + ghex + bhex : '';
+				return '#' + rhex + ghex + bhex;
 			}
 		},
 		_variables: {
