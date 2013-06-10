@@ -5,6 +5,7 @@
 			allowAlpha: true,
 			caseSensitive: true,
 			allowSpecial: true,
+			allowSpace: false,
 			otherCharacters: '',
 			recommendedEntropy: 128,
 			recommendedLength: 16,
@@ -12,6 +13,9 @@
 			defaultPenaltyPerTestFail: 10,
 			tests: {},
 			scoreCalculated: function(score) {}
+		},
+		availableCharacters: function() {
+			return this._variables.available.join('');
 		},
 		_methods: {
 			distinct: function(array){
@@ -104,7 +108,7 @@
 				return '[^' + str + ']';
 			  }
 			  return '[' + str + ']';
-			},
+			},			
 			createTests: function() {
 				var self = this,
 					variables = self._variables,
@@ -129,7 +133,7 @@
 				tests.noDigits = new RegExp(patterns.digits);
 				if(options.allowSpecial === true || !!characterSets.other || options.allowAlpha === true) {
 					// Tests whether there are digits within the password. Passwords with digits at the start or end only will not pass this test.
-				    tests.digitsWithin = new RegExp(patterns.notDigits + '+' + patterns.digits + '+' + patterns.notDigits + '+' );
+				    tests.noDigitsWithin = new RegExp(patterns.notDigits + '+' + patterns.digits + '+' + patterns.notDigits + '+' );
 				}
 			  }
 			  if(options.allowSpecial === true) {
@@ -144,7 +148,7 @@
 			  }
 			  // Tests whether all the characters in the password are distinct
 			  tests.notAllDistinctCharacters = new (function() {
-				var penaltyPerRepetition = 3;
+				var penaltyPerRepetition = 2;
 				this.penalty = 0;
 			  
 				this.test = function(value) {
@@ -208,11 +212,24 @@
 								  return false; 
 								}
 							}
-					}
 						}
+					}
 					return true;
 				};
 			  })();
+			  
+			  tests.hasInvalidCharacters = new (function() {
+				this.test = function(value) {
+					var array = methods.convertToArray(value);				
+					for(var i = 0; i < array.length; i++) {
+						var c = (options.allowAlpha === true && options.caseSensitive === false) ? array[i].toLowerCase() : array[i];
+						if($.inArray(c, variables.available) < 0) {
+							return false;
+						}
+					}
+					return true;
+				};
+			  })();			  
 			  // Tests whether the password is of equal or greater length than the recommended length option
 			  tests['lengthLessThan' + options.recommendedLength] = new (function(){
 				this.test = function(value){
@@ -258,7 +275,8 @@
 				lower = (self._variables.characterSets.lower = methods.getCharacterRange(97, 122)),
 				upper = (self._variables.characterSets.upper = methods.getCharacterRange(65, 90)),
 				special = (self._variables.characterSets.special = (function(){
-														return methods.getCharacterRange(32, 47) 
+														var start = options.allowSpace === true ? 32 : 33;
+														return methods.getCharacterRange(start, 47) 
 															 + methods.getCharacterRange(58, 64)
 															 + methods.getCharacterRange(91, 96)
 															 + methods.getCharacterRange(123, 126);
@@ -299,21 +317,7 @@
 				value = self.val(),				
 				options = widget.options,
 				variables = widget._variables,
-				methods = widget._methods,
-				array = methods.convertToArray(value),
-				valid = (function(){
-					if(value.length < options.minLength) {
-						return false;
-					}
-				
-					for(var i = 0; i < array.length; i++) {
-						var c = (options.allowAlpha === true && options.caseSensitive === false) ? array[i].toLowerCase() : array[i];
-						if($.inArray(c, variables.available) < 0) {
-							return false;
-						}
-					}
-					return true;
-					})(),
+				methods = widget._methods,				
 				score = methods.calculatePasswordScore.call(widget, value);
 		}
 	});
