@@ -25,7 +25,7 @@
 			(function($, window, undefined){
 				$(function(){
 					$('#password').passwordStrength({
-						allowDigits: true,
+						allowDigits: false,
 						allowAlpha: true,
 						allowSpecial: true,
 						caseSensitive: true,
@@ -34,6 +34,8 @@
 						recommendedLength: 16,
 						minLength: 8,
 						defaultPenaltyPerTestFail: -5,
+						weakestColor: '#00f',
+						strongestColor: '#0f0',
 						// custom tests
 						tests: {
 							notEndingInCommonNumbers: new (function() {
@@ -58,7 +60,7 @@
 						// score calculated event
 						scoreCalculated: function(score){
 							if(console.log){
-								console.log(score.points);
+								console.log(score);
 							}
 							var tableBody = $('#output tbody').empty(),
 								tableFooter = $('#output tfoot').empty();

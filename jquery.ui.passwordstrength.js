@@ -11,6 +11,8 @@
 			recommendedLength: 16,
 			minLength: 8,
 			defaultPenaltyPerTestFail: 10,
+			weakestColor: '#f00',
+			strongestColor: '#0f0',	
 			tests: {},
 			scoreCalculated: function(score) {}
 		},
@@ -97,7 +99,8 @@
 			  
 			    score.points.estimatedEntropy = Math.max(score.points.estimatedEntropy, 0);
 				score.normalized = Math.round((score.points.estimatedEntropy / score.totalAvailablePoints) * 100);
-			    score.color = !!password ? methods.getColor.call(self, score.normalized) : '';
+			    score.color = !!password ? methods.getStrengthColor.call(self, score.normalized) : '';
+				score.validity = methods.calculateValidity.call(self, password);
 			    
 				self.options.scoreCalculated.call(self.element, score);
 			  
@@ -130,24 +133,24 @@
 			  if(options.allowDigits === true) {
 				variables.available += characterSets.digits;
 				// Tests whether there are digits in the password
-				tests.noDigits = new RegExp(patterns.digits);
+				tests.hasDigits = new RegExp(patterns.digits);
 				if(options.allowSpecial === true || !!characterSets.other || options.allowAlpha === true) {
 					// Tests whether there are digits within the password. Passwords with digits at the start or end only will not pass this test.
-				    tests.noDigitsWithin = new RegExp(patterns.notDigits + '+' + patterns.digits + '+' + patterns.notDigits + '+' );
+				    tests.hasDigitsWithin = new RegExp(patterns.notDigits + '+' + patterns.digits + '+' + patterns.notDigits + '+' );
 				}
 			  }
 			  if(options.allowSpecial === true) {
 				variables.available += characterSets.special;
 				// Tests whether there are special characters in the password
-				tests.noSpecial = new RegExp(patterns.special);
+				tests.hasSpecial = new RegExp(patterns.special);
 			  }
 			  if(!!options.otherCharacters) {
 				variables.available += characterSets.other;
 				// Tests whether any of the custom characters are in the password
-				tests.noOther = new RegExp(patterns.other);
+				tests.hasOther = new RegExp(patterns.other);
 			  }
 			  // Tests whether all the characters in the password are distinct
-			  tests.notAllDistinctCharacters = new (function() {
+			  tests.allCharactersDistinct = new (function() {
 				var penaltyPerRepetition = 2;
 				this.penalty = 0;
 			  
@@ -163,7 +166,7 @@
 				};
 			  })();  
 			  // Tests whether any of the characters in the password are immediately repeated.
-			  tests.immediatelyRepeatingCharacters = new (function() {			  
+			  tests.noImmediatelyRepeatingCharacters = new (function() {			  
 				var r = /(.)\1/,
 					penaltyPerImmediateRepetition = 3;
 				
@@ -189,7 +192,7 @@
 				};
 			  })();  
 			  // Tests whether the password has keyboard walking of 3 or more characters
-			  tests.keyboardWalking = new (function() {
+			  tests.noKeyboardWalking = new (function() {
 				var keyboardWalks = [
 					'1234567890',
 					'qwertyuiop',
@@ -216,22 +219,9 @@
 					}
 					return true;
 				};
-			  })();
-			  
-			  tests.hasInvalidCharacters = new (function() {
-				this.test = function(value) {
-					var array = methods.convertToArray(value);				
-					for(var i = 0; i < array.length; i++) {
-						var c = (options.allowAlpha === true && options.caseSensitive === false) ? array[i].toLowerCase() : array[i];
-						if($.inArray(c, variables.available) < 0) {
-							return false;
-						}
-					}
-					return true;
-				};
-			  })();			  
+			  })();		  
 			  // Tests whether the password is of equal or greater length than the recommended length option
-			  tests['lengthLessThan' + options.recommendedLength] = new (function(){
+			  tests['lengthGreaterThanOrEqualTo' + options.recommendedLength] = new (function(){
 				this.test = function(value){
 				  return value.length >= options.recommendedLength;
 				};
@@ -242,28 +232,88 @@
 			  
 			  return tests;
 			},
-			getColor: function(percentage) {
+			getStrengthColor: function(percentage) {
 				var self = this,
-					p = Math.min(percentage, 100),
-					max = 255,
-					step = max / 50,
-					g = Math.min(p, 50) * step,
-					r = Math.min(100 - p, 50) * step,
-					b = 0,
-					toHex = function(number) {
-						var h = Math.floor(number).toString(16);
-						return h.length == 1 ? '0' + h : h;
-					},
-					ghex = toHex(g),
-					rhex = toHex(r),
-					bhex = toHex(b);
-			
-				return '#' + rhex + ghex + bhex;
-			}
+					methods = self._methods,
+					colors = self._variables.colors,
+					weak = colors.weak,
+					strong = colors.strong;
+				return '#' +
+					methods.getHexColor(percentage, weak.red, strong.red) +
+					methods.getHexColor(percentage, weak.green, strong.green) +
+					methods.getHexColor(percentage, weak.blue, strong.blue);
+			},
+			getHexColor: function(percentage, weak, strong) {
+				var p = percentage - 50,
+					step = (strong - weak) / 50,
+					max = Math.max(weak, strong),
+					c;
+					
+				if(percentage <= 50 && weak < strong || percentage > 50 && weak > strong) {
+					c = -1 * Math.abs(p * step) + max;
+				}
+				else {
+					c = max;
+				}
+				
+				c = Math.floor(c).toString(16);
+				return c.length === 1 ? '0' + c : c;
+			},
+			parseColors: function(){
+				var self = this,
+					methods = this._methods,
+					options = this.options,					
+					weak = (self._variables.colors.weak = methods.parseColor(options.weakestColor)),
+					strong = (self._variables.colors.strong = methods.parseColor(options.strongestColor));
+				return { weak: weak, strong: strong };
+			},
+			parseColor: function(hex) {
+				var color = hex,
+					regex = /^\#?[0-9abcdef]{6}$|^\#?[0-9abcdef]{3}$/gim;
+				
+				if(!regex.test(hex)) {
+					throw hex + ' is not a valid hexadecimal color notation.';
+				}
+					
+				if(color.indexOf('#') === 0) {
+					color = color.substr(1);
+				}
+				if(color.length === 3) {
+					color = color[0] + color[0] +
+							color[1] + color[1] +
+							color[2] + color[2];
+				}
+				return {
+					red: parseInt(color.substr(0, 2), 16),
+					green: parseInt(color.substr(2, 2), 16),
+					blue: parseInt(color.substr(4, 2), 16)
+				};
+			},			
+			calculateValidity: function(password){
+				var self = this,
+					methods = self._methods,
+					options = self.options,
+					variables = self._variables,
+					areAllCharactersValid = function(value){
+						var array = methods.convertToArray(value);				
+						for(var i = 0; i < array.length; i++) {
+							var c = (options.allowAlpha === true && options.caseSensitive === false) ? array[i].toLowerCase() : array[i];
+							if($.inArray(c, variables.available) < 0) {
+								return false;
+							}
+						}
+						return true;
+					};
+				return {
+					minLengthReached: password.length >= options.minLength,
+					allCharactersValid: areAllCharactersValid(password)
+				};
+			}			
 		},
 		_variables: {
 			characterSets : {},
-			patterns: {}
+			patterns: {},
+			colors: {}
 		},
 		_create: function(){
 			var self = this,
@@ -297,7 +347,9 @@
 				notSpecialPattern = (self._variables.patterns.notSpecial = methods.createRegexClass(special, true)),
 				notOtherPattern   = (self._variables.patterns.notOther = methods.createRegexClass(other, true)),
 				
-				tests = (options.tests = $.extend(methods.createTests.call(self), options.tests));
+				tests = (options.tests = $.extend(methods.createTests.call(self), options.tests)),
+				
+				colors = (self._variables.colors = methods.parseColors.call(self));
 		},
 		_init: function(){
 			var self = this,
